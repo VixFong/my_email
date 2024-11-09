@@ -12,6 +12,7 @@ class EmailApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Email Service',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.blue),
       initialRoute: '/',
       routes: {

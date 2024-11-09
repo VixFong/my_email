@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../EmailPage/email_page.dart';
 
 class PasswordScreen extends StatefulWidget {
   final String phoneNumber;
