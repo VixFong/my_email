@@ -1,3 +1,7 @@
+import 'package:final_essays/RegisterPage/otp_screen.dart';
+import 'package:final_essays/model/LoginResponse.dart';
+import 'package:final_essays/model/User.dart';
+import 'package:final_essays/service/ApiService.dart';
 import 'package:flutter/material.dart';
 
 class PasswordScreen extends StatefulWidget {
@@ -14,16 +18,65 @@ class _PasswordScreenState extends State<PasswordScreen> {
   bool showPassword = false;
   String errorMessage = '';
 
-  void validatePassword() {
+  void validatePassword() async {
     final String password = passwordController.text;
+    ApiService apiService = ApiService();
+    LoginResponse? loginResponse =
+        await apiService.login(widget.phoneNumber, password);
 
-    if (password == '123456') { // Example password
-      // Navigate to EmailPage on successful password validation
-      Navigator.pushReplacementNamed(context, '/email');
+    if (loginResponse != null) {
+      if (!loginResponse.authenticated && loginResponse.otpToken != null) {
+        final otpVerified = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpScreen(
+              onResendOtp: () async {
+                await apiService.resendOtp(loginResponse.otpToken!);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('OTP has been resent.')),
+                );
+              },
+              onSubmitOtp: (otp) async {
+                bool isVerified =
+                    await apiService.verifyOtp(loginResponse.otpToken!, otp);
+                if (isVerified) {
+                  Navigator.pop(context, true); // Trả về true nếu OTP đúng
+                } else {
+                  setState(() {
+                    errorMessage = 'Invalid OTP. Please try again.';
+                  });
+                }
+              },
+            ),
+          ),
+        );
+        print(otpVerified);
+        if (otpVerified == true) {
+          Navigator.pushReplacementNamed(context, '/email');
+        }
+        // if (otp != null) {
+        //   bool isVerified =
+        //       await apiService.verifyOtp(loginResponse.otpToken!, otp);
+        //   if (isVerified) {
+        //     // OTP verified successfully, navigate to EmailPage
+        //     Navigator.pushReplacementNamed(context, '/email');
+        //   } else {
+        //     // Show error if OTP verification failed
+        //     setState(() {
+        //       errorMessage = 'Invalid OTP. Please try again.';
+        //     });
+        //   }
+        // }
+      } else if (loginResponse.authenticated && loginResponse.token != null) {
+        Navigator.pushReplacementNamed(context, '/email');
+      } else {
+        setState(() {
+          errorMessage = 'Invalid password. Please try again.';
+        });
+      }
     } else {
-      // Show error if password is incorrect
       setState(() {
-        errorMessage = 'Invalid password. Please try again.';
+        errorMessage = 'Error logging in. Please try again later.';
       });
     }
   }
@@ -96,7 +149,10 @@ class _PasswordScreenState extends State<PasswordScreen> {
                   ),
                   ElevatedButton(
                     onPressed: validatePassword,
-                    child: Text('Next',style: TextStyle(color: Colors.white),),
+                    child: Text(
+                      'Next',
+                      style: TextStyle(color: Colors.white),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       minimumSize: Size(100, 50),

@@ -1,6 +1,8 @@
+import 'package:final_essays/service/ApiService.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'password_screen.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -11,10 +13,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController phoneController = TextEditingController();
   String errorMessage = '';
 
-  void validatePhoneNumber() {
+  void validatePhoneNumber(String phoneNumber, String region) async {
     final String phoneNumber = phoneController.text;
+    ApiService apiService = ApiService();
+    final isValid = await apiService.validatePhoneNumber(phoneNumber, region);
 
-    if (phoneNumber == '0839636280') {
+    if (isValid) {
       // Valid phone number, navigate to password screen with the phone number
       Navigator.push(
         context,
@@ -59,17 +63,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
               SizedBox(height: 32),
-
-              // Phone Number Field
-              TextField(
+              IntlPhoneField(
+                keyboardType: TextInputType.phone,
                 controller: phoneController,
                 decoration: InputDecoration(
                   labelText: 'Phone number',
                   border: OutlineInputBorder(),
                   errorText: errorMessage.isNotEmpty ? errorMessage : null,
                 ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                initialCountryCode: 'VN',
+                onChanged: (phone) {
+                  print(phone.completeNumber);
+                  // Debugging purposes
+                },
               ),
               SizedBox(height: 16),
 
@@ -103,7 +109,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Next Button
               ElevatedButton(
-                onPressed: validatePhoneNumber,
+                onPressed: () {
+                  final phoneNumber = phoneController.text;
+                  final region = 'VN';
+                  validatePhoneNumber(phoneNumber, region);
+                },
                 child: Text('Next'),
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, 50),

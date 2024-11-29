@@ -1,3 +1,4 @@
+import 'package:final_essays/RegisterPage/otp_screen.dart';
 import 'package:flutter/material.dart';
 import 'LoginPage/login_screen.dart';
 import 'RegisterPage/register_screen.dart';
@@ -18,7 +19,8 @@ class EmailApp extends StatelessWidget {
       routes: {
         '/': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
-        '/email': (context) => EmailPage(), 
+        '/email': (context) => EmailPage(),
+        // '/otp': (context) => OtpScreen(),
       },
     );
   }
