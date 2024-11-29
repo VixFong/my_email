@@ -18,10 +18,10 @@ import org.springframework.security.web.SecurityFilterChain;
 //@EnableMethodSecurity
 
 public class SecurityConfig {
-    private final String[] PUBLIC_ENDPOINTS={"/users","/users/register",
+    private final String[] PUBLIC_ENDPOINTS_POST_METHOD={"/users","/users/register",
             "/auth/login", "/auth/introspect", "/auth/logout", "/auth/verify-otp", "/forgot-pass/check-email", "/forgot-pass/reset-password"};
 
-    private final String[] PUBLIC_ENDPOINTS2={"/auth/verify-phoneNumber"};
+    private final String[] PUBLIC_ENDPOINT_GET_METHOD={"/auth/verify-phoneNumber", "/users/verify-otp"};
     @Autowired
     private CustomJwtDecoder customJwtDecoder;
 
@@ -29,8 +29,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         http.authorizeHttpRequests(req -> req
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS2).permitAll()
-                .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS ).permitAll()
+                .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINT_GET_METHOD).permitAll()
+                .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST_METHOD ).permitAll()
                 .anyRequest().authenticated());
 
         http.oauth2ResourceServer(oauth2 ->

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
@@ -31,8 +32,8 @@ public class CreateUserReq {
     private LocalDate dateOfBirth;
     private String gender;
 
-    private String profilePic;
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+//    private String profilePic;
+//    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
 
     @Email(message = "EMAIL_INVALID")
     private String email;
@@ -40,6 +41,7 @@ public class CreateUserReq {
     @Email(message = "EMAIL_INVALID")
     private String gmailAccount;
 
-    private boolean twoFactorEnabled;
-    private LocalDate createdAt;
+//    private boolean twoFactorEnabled;
+
+
 }

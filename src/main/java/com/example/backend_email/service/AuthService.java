@@ -59,8 +59,10 @@ public class AuthService {
     public boolean checkPhoneNumber(String phoneNumber, String region){
         try{
             PhoneNumber phone = phoneNumberUtil.parse(phoneNumber,region);
+            System.out.println(phoneNumberUtil.isValidNumber(phone));
             return phoneNumberUtil.isValidNumber(phone);
         }catch (NumberParseException e){
+            System.out.println("So dien thoai khong hop le");
             return false;
         }
 
@@ -110,7 +112,7 @@ public class AuthService {
 
         // Lấy email từ OTP token để xác định user
         Map<String, Object> claims = jwtUtils.validateTokenOTP(otpToken);
-        String email = (String) claims.get("email");
+//        String email = (String) claims.get("email");
         String phoneNumber = (String) claims.get("phoneNumber");
         System.out.println("otp " +  providedOtp);
 

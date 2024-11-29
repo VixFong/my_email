@@ -30,7 +30,9 @@ public class OtpService {
 
     @Autowired
     private JwtUtils jwtUtils;
-    public OtpResponse generateOtp(String phoneNumber,String email) throws JOSEException {
+    public OtpResponse generateOtp(String phoneNumber, String email) throws JOSEException {
+
+
         String otp = String.valueOf(new Random().nextInt(900000) + 100000); // 6 chữ số
         Map<String, Object> claims = new HashMap<>();
         claims.put("phoneNumber", phoneNumber);
@@ -39,6 +41,8 @@ public class OtpService {
 
         String subject = "Your OTP Code";
         String text = "Your OTP is: " + otp + "\nIt will expire in 1 minute.";
+
+        System.out.println(email);
         emailService.sendOtp(email, subject, text);
 //        System.out.println("token OTP: " + );
         var otpResponse = OtpResponse.builder()
@@ -49,7 +53,6 @@ public class OtpService {
 
     public boolean validateOtp(String token, String otpProvided) {
         try{
-
             //Kiểm tra token có nằm trong danh sách Invalid token không?
             if(authService.validateToken(token).isValid()){
                 Map<String, Object> claims = jwtUtils.validateTokenOTP(token);
@@ -57,7 +60,7 @@ public class OtpService {
                 // Lấy OTP từ payload
                 String otp = (String) claims.get("otp");
 //                System.out.println("Validate Token");
-
+//                System.out.println("ot");
                 // So sánh với OTP được cung cấp
                 return otp.equals(otpProvided);
             }

@@ -4,13 +4,16 @@ import com.cloudinary.Api;
 import com.example.backend_email.dto.request.user.CreateUserReq;
 import com.example.backend_email.dto.request.user.UpdateProfileReq;
 import com.example.backend_email.dto.response.ApiResponse;
+import com.example.backend_email.dto.response.user.OtpResponse;
 import com.example.backend_email.dto.response.user.UserResponse;
 import com.example.backend_email.service.UserService;
+import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.text.ParseException;
 
 @RestController
 @RequestMapping("/users")
@@ -19,13 +22,20 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public ApiResponse<UserResponse> registerUser(@RequestBody CreateUserReq request){
+    public ApiResponse<OtpResponse> registerUser(@RequestBody CreateUserReq request) throws JOSEException {
         System.out.println("Controller");
-        return ApiResponse.<UserResponse>builder()
-                .data(userService.createUser(request))
+        return ApiResponse.<OtpResponse>builder()
+                .data(userService.sendRequestCreateAccount(request))
                 .build();
     }
 
+    @GetMapping("/verify-otp")
+    public ApiResponse<Void> verifyOtp(@RequestParam String otpToken, @RequestParam String otpProvided) throws JOSEException, ParseException {
+        System.out.println("Verify otp");
+        userService.createUser(otpToken, otpProvided);
+        return ApiResponse.<Void>builder()
+                .build();
+    }
     @GetMapping("info")
     public ApiResponse<UserResponse> getUser(){
         return ApiResponse.<UserResponse>builder()
