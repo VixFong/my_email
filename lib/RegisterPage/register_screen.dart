@@ -356,18 +356,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => OtpScreen(
-            onResendOtp: () {
+            onResendOtp: () async {
               // Logic to resend OTP
+              await apiService.resendOtp(phoneNumberController.text.trim());
             },
             onSubmitOtp: (otp) async {
               // Logic to verify OTP
-              final vertificationResult =
-                  await apiService.verifiedOtpRegister(result.data!.token, otp);
-              if (vertificationResult.isSuccess) {
-                Navigator.pop(context, true);
-              } else {
-                setState(() {});
-              }
+              final verificationResult = await apiService.verifiedOtpRegister(result.data!.token, otp);
+              return verificationResult.isSuccess; // Always return a bool (true/false)
             },
           ),
         ),

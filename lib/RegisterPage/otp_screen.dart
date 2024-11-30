@@ -142,6 +142,7 @@
 //   }
 // }
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 class OtpScreen extends StatefulWidget {
   final Function onResendOtp; // Hàm gửi lại OTP
@@ -154,17 +155,30 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  final List<TextEditingController> controllers =
-      List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> _focusNodes =
-      List.generate(6, (index) => FocusNode());
+  final List<TextEditingController> controllers = List.generate(6, (index) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
   String errorMessage = '';
   bool isResending = false;
+  bool isSuccess = false; // Track OTP verification success
+  int countdown = 3; // Countdown value
+  Timer? _timer; // Timer for countdown
 
-  void checkOtp() {
+  void checkOtp() async {
     String enteredOtp = controllers.map((controller) => controller.text).join();
     if (enteredOtp.length == 6) {
-      widget.onSubmitOtp(enteredOtp); // Gửi OTP về callback
+      // Call the OTP verification API
+      final verificationResult = await widget.onSubmitOtp(enteredOtp);
+      if (verificationResult) {
+        // If successful, start the countdown
+        setState(() {
+          isSuccess = true;
+        });
+        startCountdown();
+      } else {
+        setState(() {
+          errorMessage = 'Invalid OTP.';
+        });
+      }
     } else {
       setState(() {
         errorMessage = 'Please enter a 6-digit OTP.';
@@ -172,12 +186,25 @@ class _OtpScreenState extends State<OtpScreen> {
     }
   }
 
+  void startCountdown() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        if (countdown > 1) {
+          countdown--;
+        } else {
+          timer.cancel();
+          Navigator.pushReplacementNamed(context, '/'); // Return to the previous screen (e.g., login)
+        }
+      });
+    });
+  }
+
   Future<void> resendOtp() async {
     setState(() {
       isResending = true;
-      errorMessage = ''; // Xóa thông báo lỗi khi gửi lại OTP
+      errorMessage = '';
     });
-    await widget.onResendOtp(); // Gọi hàm gửi lại OTP
+    await widget.onResendOtp();
     setState(() {
       isResending = false;
     });
@@ -187,6 +214,7 @@ class _OtpScreenState extends State<OtpScreen> {
   void dispose() {
     controllers.forEach((controller) => controller.dispose());
     _focusNodes.forEach((node) => node.dispose());
+    _timer?.cancel(); // Cancel the timer when the screen is disposed
     super.dispose();
   }
 
@@ -199,71 +227,76 @@ class _OtpScreenState extends State<OtpScreen> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Enter the 6-digit OTP sent to your phone',
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 16),
-
-              // OTP Input Fields
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(6, (index) {
-                  return Container(
-                    width: 40,
-                    margin: EdgeInsets.symmetric(horizontal: 4),
-                    child: TextField(
-                      controller: controllers[index],
-                      focusNode: _focusNodes[index],
-                      maxLength: 1,
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      decoration: InputDecoration(
-                        counterText: '', // Remove counter text
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (value) {
-                        if (value.isNotEmpty && index < 5) {
-                          FocusScope.of(context)
-                              .requestFocus(_focusNodes[index + 1]);
-                        } else if (value.isEmpty && index > 0) {
-                          FocusScope.of(context)
-                              .requestFocus(_focusNodes[index - 1]);
-                        }
-                      },
+          child: isSuccess
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green, size: 60),
+                    SizedBox(height: 16),
+                    Text(
+                      'Registration successful!',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
-                  );
-                }),
-              ),
-              SizedBox(height: 16),
-
-              // Error Message
-              if (errorMessage.isNotEmpty)
-                Text(
-                  errorMessage,
-                  style: TextStyle(color: Colors.red),
+                    SizedBox(height: 16),
+                    Text(
+                      'Returning to login in $countdown...',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ],
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Enter the 6-digit OTP sent to your phone',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(6, (index) {
+                        return Container(
+                          width: 40,
+                          margin: EdgeInsets.symmetric(horizontal: 4),
+                          child: TextField(
+                            controller: controllers[index],
+                            focusNode: _focusNodes[index],
+                            maxLength: 1,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                              counterText: '',
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (value) {
+                              if (value.isNotEmpty && index < 5) {
+                                FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
+                              } else if (value.isEmpty && index > 0) {
+                                FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
+                              }
+                            },
+                          ),
+                        );
+                      }),
+                    ),
+                    SizedBox(height: 16),
+                    if (errorMessage.isNotEmpty)
+                      Text(
+                        errorMessage,
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: isResending ? null : resendOtp,
+                      child: isResending ? CircularProgressIndicator() : Text('Resend OTP'),
+                    ),
+                    SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: checkOtp,
+                      child: Text('Verify OTP'),
+                    ),
+                  ],
                 ),
-              SizedBox(height: 16),
-
-              // Resend OTP Button
-              ElevatedButton(
-                onPressed: isResending ? null : resendOtp,
-                child: isResending
-                    ? CircularProgressIndicator()
-                    : Text('Resend OTP'),
-              ),
-              SizedBox(height: 16),
-
-              // Submit Button
-              ElevatedButton(
-                onPressed: checkOtp,
-                child: Text('Verify OTP'),
-              ),
-            ],
-          ),
         ),
       ),
     );

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:provider/provider.dart'; // Added import for ThemeProvider
+import '../theme_provider.dart'; // Added import for ThemeProvider
 import 'search_screen.dart';
+import '../SettingPage/setting_page.dart';
 
 class EmailPage extends StatefulWidget {
   @override
@@ -41,13 +44,15 @@ class _EmailPageState extends State<EmailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context); // **Added ThemeProvider**
+
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.white,
+      backgroundColor: themeProvider.isDarkMode ? Colors.black : Colors.white, // **Dark/Light Background**
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60.0),
         child: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: themeProvider.isDarkMode ? Colors.black : Colors.white, // **Dark/Light AppBar**
           elevation: 0,
           automaticallyImplyLeading: false,
           flexibleSpace: Padding(
@@ -62,13 +67,13 @@ class _EmailPageState extends State<EmailPage> {
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.grey[200], // **Dark/Light Search Box**
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.menu, color: Colors.black),
+                      icon: Icon(Icons.menu, color: themeProvider.isDarkMode ? Colors.white : Colors.black), // **Dark/Light Menu Icon**
                       onPressed: () {
                         _scaffoldKey.currentState?.openDrawer();
                       },
@@ -76,11 +81,14 @@ class _EmailPageState extends State<EmailPage> {
                     Expanded(
                       child: Text(
                         'Search in mail',
-                        style: TextStyle(color: Colors.black54, fontSize: 16),
+                        style: TextStyle(
+                          color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54, // **Dark/Light Text**
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                     CircleAvatar(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: themeProvider.isDarkMode ? Colors.grey : Colors.blue, // **Dark/Light Avatar**
                       child: Text(
                         'P',
                         style: TextStyle(color: Colors.white),
@@ -94,11 +102,11 @@ class _EmailPageState extends State<EmailPage> {
         ),
       ),
       drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
+        backgroundColor: themeProvider.isDarkMode ? Colors.grey[900] : Colors.white, // **Dark/Light Drawer**
+        child: Column(
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(color: Colors.grey[900]),
+              decoration: BoxDecoration(color: themeProvider.isDarkMode ? Colors.black : Colors.grey[900]), // **Dark/Light Drawer Header**
               child: Row(
                 children: [
                   Icon(Icons.email, color: Colors.white, size: 40),
@@ -110,26 +118,66 @@ class _EmailPageState extends State<EmailPage> {
                 ],
               ),
             ),
-            ListTile(
-              leading: Icon(Icons.inbox, color: Colors.redAccent),
-              title: Text('Primary'),
-              onTap: () {
-                // Handle Primary folder navigation
-              },
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.inbox, color: Colors.redAccent),
+                    title: Text(
+                      'Primary',
+                      style: TextStyle(color: themeProvider.isDarkMode ? Colors.white70 : Colors.black), // **Dark/Light Text**
+                    ),
+                    onTap: () {
+                      // Handle Primary folder navigation
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.star, color: Colors.amber),
+                    title: Text(
+                      'Starred',
+                      style: TextStyle(color: themeProvider.isDarkMode ? Colors.white70 : Colors.black), // **Dark/Light Text**
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StarredEmailsPage(starredEmails),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
+            Divider(color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.grey), // **Dark/Light Divider**
             ListTile(
-              leading: Icon(Icons.star, color: Colors.amber),
-              title: Text('Starred'),
+              leading: Icon(Icons.settings, color: themeProvider.isDarkMode ? Colors.grey : Colors.black), // **Dark/Light Settings Icon**
+              title: Text(
+                'Settings',
+                style: TextStyle(color: themeProvider.isDarkMode ? Colors.white70 : Colors.black), // **Dark/Light Text**
+              ),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => StarredEmailsPage(starredEmails),
-                  ),
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
                 );
               },
             ),
-            // Other drawer items as needed
+            ListTile(
+              leading: Icon(Icons.logout, color: Colors.red),
+              title: Text(
+                'Logout',
+                style: TextStyle(color: themeProvider.isDarkMode ? Colors.white70 : Colors.black), // **Dark/Light Text**
+              ),
+              onTap: () {
+                // Handle Logout navigation
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Logged out!")),
+                );
+                Navigator.pushReplacementNamed(context, '/');
+              },
+            ),
           ],
         ),
       ),
@@ -153,11 +201,11 @@ class _EmailPageState extends State<EmailPage> {
                   ),
                   title: Text(
                     'Shopee',
-                    style: TextStyle(color: Colors.black),
+                    style: TextStyle(color: themeProvider.isDarkMode ? Colors.white70 : Colors.black), // **Dark/Light Text**
                   ),
                   subtitle: Text(
                     'This is a sample email message. Slide to see more...',
-                    style: TextStyle(color: Colors.grey[700]),
+                    style: TextStyle(color: themeProvider.isDarkMode ? Colors.grey[500] : Colors.grey[700]), // **Dark/Light Text**
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -166,12 +214,12 @@ class _EmailPageState extends State<EmailPage> {
                     children: [
                       Text(
                         '13:50',
-                        style: TextStyle(color: Colors.grey[700]),
+                        style: TextStyle(color: themeProvider.isDarkMode ? Colors.grey[500] : Colors.grey[700]), // **Dark/Light Text**
                       ),
                       IconButton(
                         icon: Icon(
                           Icons.star,
-                          color: starredEmails.contains(index) ? Colors.amber : Colors.grey,
+                          color: starredEmails.contains(index) ? Colors.amber : themeProvider.isDarkMode ? Colors.grey : Colors.black, // **Dark/Light Icon**
                         ),
                         onPressed: () {
                           toggleStar(index);
@@ -193,7 +241,7 @@ class _EmailPageState extends State<EmailPage> {
               height: 56,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[800],
+                  backgroundColor: themeProvider.isDarkMode ? Colors.grey[800] : Colors.grey[800], // **Dark/Light Button**
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -225,11 +273,11 @@ class _EmailPageState extends State<EmailPage> {
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color: Colors.grey[300],
+                  color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.grey[300], // **Dark/Light Divider**
                 ),
                 Container(
                   height: 56,
-                  color: Colors.white,
+                  color: themeProvider.isDarkMode ? Colors.black : Colors.white, // **Dark/Light Footer**
                   child: Center(
                     child: Stack(
                       alignment: Alignment.center,
@@ -284,8 +332,10 @@ class StarredEmailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context); // **Added ThemeProvider**
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: themeProvider.isDarkMode ? Colors.black : Colors.blue, // **Dark/Light AppBar**
         title: Text('Starred Emails'),
       ),
       body: ListView.builder(
@@ -300,8 +350,14 @@ class StarredEmailsPage extends StatelessWidget {
                 style: TextStyle(color: Colors.white),
               ),
             ),
-            title: Text('Shopee'),
-            subtitle: Text('This is a starred email message.'),
+            title: Text(
+              'Shopee',
+              style: TextStyle(color: themeProvider.isDarkMode ? Colors.white70 : Colors.black), // **Dark/Light Text**
+            ),
+            subtitle: Text(
+              'This is a starred email message.',
+              style: TextStyle(color: themeProvider.isDarkMode ? Colors.grey[500] : Colors.grey[700]), // **Dark/Light Text**
+            ),
           );
         },
       ),
