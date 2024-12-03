@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:final_essays/model/ErrorResponse.dart';
 import 'package:final_essays/model/LoginResponse.dart';
 import 'package:final_essays/model/OtpResponse.dart';
@@ -8,7 +9,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../model/User.dart';
 
 class ApiService {
-  final String baseUrl = "http://localhost:8080";
+  late final String baseUrl;
+  ApiService() {
+    if (Platform.isAndroid) {
+      baseUrl = 'http://10.0.2.2:8080'; // Android Emulator
+    } else if (Platform.isIOS) {
+      baseUrl = 'http://127.0.0.1:8080'; // iOS Simulator
+    } else if (Platform.isWindows) {
+      baseUrl = 'http://localhost:8080'; // Windows localhost
+    } else if (Platform.isLinux || Platform.isMacOS) {
+      baseUrl = 'http://127.0.0.1:8080'; // Linux/MacOS localhost
+    } else {
+      throw UnsupportedError("Unsupported platform");
+    }
+  }
   Future<LoginResponse?> login(String phoneNumber, String password) async {
     // print(phoneNumber);
     // print(password);
