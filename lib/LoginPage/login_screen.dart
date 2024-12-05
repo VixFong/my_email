@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'password_screen.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import '../ForgotPage/forgot_password.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -85,10 +86,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   TextButton(
                     onPressed: () {
-                      // Implement 'Forgot Phone Number?' functionality
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ForgotPasswordPage(), 
+                        ),
+                      );
                     },
                     child: Text(
-                      'Forgot phone number?',
+                      'Forgot password?',
                       style: TextStyle(color: Colors.blue),
                     ),
                   ),

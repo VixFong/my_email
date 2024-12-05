@@ -17,6 +17,7 @@ class _EmailPageState extends State<EmailPage> {
 
   // Store starred emails
   List<int> starredEmails = [];
+   List<Map<String, String>> drafts = [];
 
   void onScroll(ScrollNotification notification) {
     if (notification is UserScrollNotification) {
@@ -57,13 +58,19 @@ class _EmailPageState extends State<EmailPage> {
             right: 16.0,
             top: 16.0,
           ),
-          child: ComposeEmailForm(),
+            child: ComposeEmailForm(
+            onDraftSaved: (draft) {
+              setState(() {
+                drafts.add(draft); 
+              });
+            },
+          ),
         );
       },
     );
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     final themeProvider =
         Provider.of<ThemeProvider>(context); // **Added ThemeProvider**
@@ -190,6 +197,24 @@ class _EmailPageState extends State<EmailPage> {
                         MaterialPageRoute(
                           builder: (context) =>
                               StarredEmailsPage(starredEmails),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.drafts, color: Colors.blue),
+                    title: Text(
+                      'Drafts',
+                      style: TextStyle(
+                          color: themeProvider.isDarkMode
+                              ? Colors.white70
+                              : Colors.black), // **Dark/Light Text**
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DraftPage(drafts),
                         ),
                       );
                     },
@@ -454,6 +479,42 @@ class StarredEmailsPage extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class DraftPage extends StatelessWidget {
+  final List<Map<String, String>> drafts;
+
+  DraftPage(this.drafts);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Drafts"),
+      ),
+      body: drafts.isEmpty
+          ? Center(
+              child: Text("No drafts available."),
+            )
+          : ListView.builder(
+              itemCount: drafts.length,
+              itemBuilder: (context, index) {
+                final draft = drafts[index];
+                return ListTile(
+                  title: Text(draft['title'] ?? 'No Title'),
+                  subtitle: Text(
+                    draft['content'] ?? 'No Content',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () {
+                    // Handle opening the draft
+                  },
+                );
+              },
+            ),
     );
   }
 }
