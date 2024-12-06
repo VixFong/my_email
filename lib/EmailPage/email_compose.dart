@@ -4,8 +4,9 @@ import 'file_utils.dart';
 
 class ComposeEmailForm extends StatefulWidget {
   final Function(Map<String, String>)? onDraftSaved; // Callback for saving drafts
+  final Map<String, String>? initialDetails; // For pre-filled details (reply/forward)
 
-  ComposeEmailForm({this.onDraftSaved});
+  ComposeEmailForm({this.onDraftSaved, this.initialDetails});
 
   @override
   _ComposeEmailFormState createState() => _ComposeEmailFormState();
@@ -18,6 +19,18 @@ class _ComposeEmailFormState extends State<ComposeEmailForm> {
   final List<Map<String, String>> _attachments = [];
   String _selectedLabel = 'Inbox'; // Default label
   final List<String> _labels = ['Inbox', 'Important'];
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill fields if initial details are provided
+    if (widget.initialDetails != null) {
+      _toController.text = widget.initialDetails?['to'] ?? '';
+      _titleController.text = widget.initialDetails?['title'] ?? '';
+      _contentController.text = widget.initialDetails?['content'] ?? '';
+    }
+  }
 
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -56,7 +69,7 @@ class _ComposeEmailFormState extends State<ComposeEmailForm> {
 
   void _viewAttachment(String filePath) {
     if (filePath.isNotEmpty) {
-      openFile(context, filePath);
+      openFile(context, filePath); // File viewing functionality
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("File path not found!")),
@@ -74,13 +87,18 @@ class _ComposeEmailFormState extends State<ComposeEmailForm> {
 
     // Call the onDraftSaved callback if provided
     if (widget.onDraftSaved != null) {
-      widget.onDraftSaved!(draft);
+      widget.onDraftSaved!(draft); // Save the draft through the callback
+    } else {
+      // If no callback is provided, show a fallback message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Unable to save draft!")),
+      );
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Email saved to Drafts!")),
     );
-    Navigator.pop(context);
+    Navigator.pop(context); // Close the compose form
   }
 
   Future<bool> _onWillPop() async {
@@ -88,38 +106,57 @@ class _ComposeEmailFormState extends State<ComposeEmailForm> {
         _titleController.text.isNotEmpty ||
         _contentController.text.isNotEmpty ||
         _attachments.isNotEmpty) {
-      return await showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Discard Email?'),
-              content: const Text(
-                  'You have unsaved changes. Do you want to save this email as a draft?'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context, false); // Discard
-                  },
-                  child: const Text('No'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    _saveAsDraft();
-                    Navigator.pop(context, true); // Save and Exit
-                  },
-                  child: const Text('Yes'),
-                ),
-              ],
+      final shouldSave = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Discard Email?'),
+          content: const Text(
+              'You have unsaved changes. Do you want to save this email as a draft?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false), // Discard
+              child: const Text('No'),
             ),
-          ) ??
-          false;
+            TextButton(
+              onPressed: () {
+                _saveAsDraft();
+                Navigator.pop(context, true);
+              },
+              child: const Text('Yes'),
+            ),
+          ],
+        ),
+      );
+      return shouldSave ?? false;
     }
     return true;
+  }
+
+  // Validate email
+  bool _isEmailValid(String email) {
+    final regex = RegExp(r'^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return regex.hasMatch(email);
+  }
+
+  // Submit email
+  void _submitEmail() {
+    if (_toController.text.isEmpty || !_isEmailValid(_toController.text)) {
+      setState(() {
+        errorMessage = 'Please enter a valid email address.';
+      });
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Email sent to ${_toController.text}!")),
+    );
+    Navigator.pop(context); // Close the compose form
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: _onWillPop,
+      onWillPop: _onWillPop, // Handle back navigation with discard alert
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Compose Email'),
@@ -150,45 +187,34 @@ class _ComposeEmailFormState extends State<ComposeEmailForm> {
             children: [
               TextField(
                 controller: _toController,
-                decoration: const InputDecoration(
-                  labelText: 'Send To',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'To',
+                  border: const OutlineInputBorder(),
+                  errorText: errorMessage,
                 ),
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
+
               TextField(
                 controller: _titleController,
                 decoration: const InputDecoration(
-                  labelText: 'Title',
+                  labelText: 'Subject',
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
+
               TextField(
                 controller: _contentController,
                 maxLines: 5,
                 decoration: const InputDecoration(
-                  labelText: 'Content',
+                  labelText: 'Message',
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _pickFile,
-                    icon: const Icon(Icons.attach_file),
-                    label: const Text('Attach File'),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: _pickImage,
-                    icon: const Icon(Icons.image),
-                    label: const Text('Attach Image'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+
               if (_attachments.isNotEmpty)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,59 +230,33 @@ class _ComposeEmailFormState extends State<ComposeEmailForm> {
                       children: _attachments.asMap().entries.map((entry) {
                         int index = entry.key;
                         Map<String, String> file = entry.value;
-                        return Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              GestureDetector(
-                                onTap: () => _viewAttachment(file['path'] ?? ''),
-                                child: Text(
-                                  file['name'] ?? 'Unknown File',
-                                  style: const TextStyle(
-                                    color: Colors.blue,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: () => _removeAttachment(index),
-                                child: const Icon(
-                                  Icons.close,
-                                  color: Colors.red,
-                                  size: 20,
-                                ),
-                              ),
-                            ],
+                        return GestureDetector(
+                          onTap: () => _viewAttachment(file['path'] ?? ''),
+                          child: Chip(
+                            label: Text(file['name'] ?? 'Unknown File'),
+                            onDeleted: () => _removeAttachment(index),
                           ),
                         );
                       }).toList(),
                     ),
                   ],
                 ),
-              const SizedBox(height: 24),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content:
-                              Text("Email sent to ${_toController.text}!")),
-                    );
-                  },
-                  icon: const Icon(Icons.send),
-                  label: const Text('Send'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
+              const SizedBox(height: 16),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _pickFile,
+                    icon: const Icon(Icons.attach_file),
+                    label: const Text('Attach File'),
                   ),
-                ),
+                  ElevatedButton.icon(
+                    onPressed: _submitEmail,
+                    icon: const Icon(Icons.send),
+                    label: const Text('Send'),
+                  ),
+                ],
               ),
             ],
           ),

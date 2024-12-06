@@ -5,6 +5,10 @@ import '../theme_provider.dart'; // Added import for ThemeProvider
 import 'search_screen.dart';
 import '../SettingPage/setting_page.dart';
 import 'email_compose.dart';
+import 'detail_email.dart';
+import 'draft_page.dart';
+import 'starred_emails_page.dart';
+import 'trash_page.dart';
 
 class EmailPage extends StatefulWidget {
   @override
@@ -15,9 +19,24 @@ class _EmailPageState extends State<EmailPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool isComposeButtonExpanded = true;
 
+    // List of emails
+  List<Map<String, String>> emails = List.generate(
+    20,
+    (index) => {
+      'sender': 'Sender $index',
+      'title': 'Subject $index',
+      'content': 'This is the content of email $index.',
+    },
+  ); // Sample emails
+
+  int? hoveredIndex;
+
   // Store starred emails
   List<int> starredEmails = [];
-   List<Map<String, String>> drafts = [];
+  List<Map<String, String>> drafts = [];
+  List<int> selectedEmails = []; 
+  bool isSelectionMode = false;
+  List<Map<String, String>> trashedEmails = [];
 
   void onScroll(ScrollNotification notification) {
     if (notification is UserScrollNotification) {
@@ -44,6 +63,80 @@ class _EmailPageState extends State<EmailPage> {
         starredEmails.add(index);
       }
     });
+  }
+
+   // Toggle email selection (Activated on long press or tap in selection mode)
+  void toggleSelection(int index) {
+    setState(() {
+      if (selectedEmails.contains(index)) {
+        selectedEmails.remove(index);
+        if (selectedEmails.isEmpty) {
+          isSelectionMode = false; // Exit selection mode if no emails are selected
+        }
+      } else {
+        selectedEmails.add(index);
+        isSelectionMode = true; // Enter selection mode
+      }
+    });
+  }
+
+  // Delete selected emails (Triggered from the AppBar delete button in selection mode)
+void deleteSelectedEmails() {
+  setState(() {
+    if (emails.isEmpty || selectedEmails.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No emails to delete!")),
+      );
+      return;
+    }
+
+    // Sort indices in descending order to avoid shifting issues
+    selectedEmails.sort((a, b) => b.compareTo(a));
+
+    // Move selected emails to Trash and remove them from the main list
+    for (int index in selectedEmails) {
+      trashedEmails.add(emails[index]); // Add to trash
+      emails.removeAt(index); // Remove from emails
+    }
+
+    selectedEmails.clear();
+    isSelectionMode = false;
+
+    print("Emails After Deletion: ${emails.length}");
+    print("Trashed Emails: ${trashedEmails.length}");
+  });
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Emails moved to Trash!")),
+  );
+}
+
+
+  // Handle email tap (Navigate to details or toggle selection if in selection mode)
+  void handleEmailTap(int index) {
+    if (isSelectionMode) {
+      toggleSelection(index); // Toggle selection if in selection mode
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EmailDetailPage(
+            emailDetails: {
+              'sender': 'Sender $index',
+              'title': 'Subject $index',
+              'content': 'This is the email content for item $index.',
+              'label': 'Inbox',
+              'attachments': 'file1.pdf,file2.jpg',
+            },
+          ),
+        ),
+      );
+    }
+  }
+
+  // Handle email long press to enable selection mode
+  void handleEmailLongPress(int index) {
+    toggleSelection(index); // Toggle selection on long press
   }
 
   void showComposeModal(BuildContext context) {
@@ -80,68 +173,32 @@ class _EmailPageState extends State<EmailPage> {
       backgroundColor: themeProvider.isDarkMode
           ? Colors.black
           : Colors.white, // **Dark/Light Background**
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60.0),
-        child: AppBar(
-          backgroundColor: themeProvider.isDarkMode
-              ? Colors.black
-              : Colors.white, // **Dark/Light AppBar**
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          flexibleSpace: Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 10.0),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SearchScreen()),
-                );
-              },
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: themeProvider.isDarkMode
-                      ? Colors.grey[800]
-                      : Colors.grey[200], // **Dark/Light Search Box**
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.menu,
-                          color: themeProvider.isDarkMode
-                              ? Colors.white
-                              : Colors.black), // **Dark/Light Menu Icon**
-                      onPressed: () {
-                        _scaffoldKey.currentState?.openDrawer();
-                      },
-                    ),
-                    Expanded(
-                      child: Text(
-                        'Search in mail',
-                        style: TextStyle(
-                          color: themeProvider.isDarkMode
-                              ? Colors.white70
-                              : Colors.black54, // **Dark/Light Text**
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    CircleAvatar(
-                      backgroundColor: themeProvider.isDarkMode
-                          ? Colors.grey
-                          : Colors.blue, // **Dark/Light Avatar**
-                      child: Text(
-                        'P',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+       appBar: AppBar(
+        backgroundColor:
+            themeProvider.isDarkMode ? Colors.black : Colors.white,
+        title: isSelectionMode
+            ? Text('${selectedEmails.length} selected') // Show selected count
+            : const Text('Emails'),
+        actions: [
+          if (isSelectionMode)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: deleteSelectedEmails,
             ),
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TrashPage(
+                    trashedEmails: trashedEmails, // Pass trashed emails
+                  ),
+                ),
+              );
+            },
           ),
-        ),
+        ],
       ),
       drawer: Drawer(
         backgroundColor: themeProvider.isDarkMode
@@ -273,56 +330,69 @@ class _EmailPageState extends State<EmailPage> {
               return true;
             },
             child: ListView.builder(
-              itemCount: 20, // Example email count
+              itemCount: emails.length,
               itemBuilder: (context, index) {
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.red,
-                    child: Text(
-                      'S',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  title: Text(
-                    'Shopee',
-                    style: TextStyle(
-                        color: themeProvider.isDarkMode
-                            ? Colors.white70
-                            : Colors.black), // **Dark/Light Text**
-                  ),
-                  subtitle: Text(
-                    'This is a sample email message. Slide to see more...',
-                    style: TextStyle(
-                        color: themeProvider.isDarkMode
-                            ? Colors.grey[500]
-                            : Colors.grey[700]), // **Dark/Light Text**
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '13:50',
-                        style: TextStyle(
+                return MouseRegion(
+                  onEnter: (_) {
+                    setState(() {
+                      hoveredIndex = index;
+                    });
+                  },
+                  onExit: (_) {
+                    setState(() {
+                      hoveredIndex = null;
+                    });
+                  },
+                  child: GestureDetector(
+                    onTap: () => handleEmailTap(index),
+                    onLongPress: () => handleEmailLongPress(index),
+                    child: Container(
+                      color: selectedEmails.contains(index)
+                          ? Colors.blue.withOpacity(0.2)
+                          : hoveredIndex == index
+                              ? Colors.grey.withOpacity(0.1)
+                              : Colors.transparent,
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.red,
+                          child: Text(
+                            'S',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        title: Text(
+                          emails[index]['title'] ?? '',
+                          style: TextStyle(
+                            color: themeProvider.isDarkMode
+                                ? Colors.white70
+                                : Colors.black,
+                          ),
+                        ),
+                        subtitle: Text(
+                          emails[index]['content'] ?? '',
+                          style: TextStyle(
                             color: themeProvider.isDarkMode
                                 ? Colors.grey[500]
-                                : Colors.grey[700]), // **Dark/Light Text**
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.star,
-                          color: starredEmails.contains(index)
-                              ? Colors.amber
-                              : themeProvider.isDarkMode
-                                  ? Colors.grey
-                                  : Colors.black, // **Dark/Light Icon**
+                                : Colors.grey[700],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        onPressed: () {
-                          toggleStar(index);
-                        },
+                        trailing: IconButton(
+                          icon: Icon(
+                            Icons.star,
+                            color: starredEmails.contains(index)
+                                ? Colors.amber
+                                : themeProvider.isDarkMode
+                                    ? Colors.grey
+                                    : Colors.black,
+                          ),
+                          onPressed: () {
+                            toggleStar(index);
+                          },
+                        ),
                       ),
-                    ],
+                    ),
                   ),
                 );
               },
@@ -430,91 +500,6 @@ class _EmailPageState extends State<EmailPage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class StarredEmailsPage extends StatelessWidget {
-  final List<int> starredEmails;
-
-  StarredEmailsPage(this.starredEmails);
-
-  @override
-  Widget build(BuildContext context) {
-    final themeProvider =
-        Provider.of<ThemeProvider>(context); // **Added ThemeProvider**
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: themeProvider.isDarkMode
-            ? Colors.black
-            : Colors.blue, // **Dark/Light AppBar**
-        title: Text('Starred Emails'),
-      ),
-      body: ListView.builder(
-        itemCount: starredEmails.length,
-        itemBuilder: (context, index) {
-          int emailIndex = starredEmails[index];
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.red,
-              child: Text(
-                'S',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-            title: Text(
-              'Shopee',
-              style: TextStyle(
-                  color: themeProvider.isDarkMode
-                      ? Colors.white70
-                      : Colors.black), // **Dark/Light Text**
-            ),
-            subtitle: Text(
-              'This is a starred email message.',
-              style: TextStyle(
-                  color: themeProvider.isDarkMode
-                      ? Colors.grey[500]
-                      : Colors.grey[700]), // **Dark/Light Text**
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class DraftPage extends StatelessWidget {
-  final List<Map<String, String>> drafts;
-
-  DraftPage(this.drafts);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Drafts"),
-      ),
-      body: drafts.isEmpty
-          ? Center(
-              child: Text("No drafts available."),
-            )
-          : ListView.builder(
-              itemCount: drafts.length,
-              itemBuilder: (context, index) {
-                final draft = drafts[index];
-                return ListTile(
-                  title: Text(draft['title'] ?? 'No Title'),
-                  subtitle: Text(
-                    draft['content'] ?? 'No Content',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  onTap: () {
-                    // Handle opening the draft
-                  },
-                );
-              },
-            ),
     );
   }
 }
