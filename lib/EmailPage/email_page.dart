@@ -9,6 +9,7 @@ import 'detail_email.dart';
 import 'draft_page.dart';
 import 'starred_emails_page.dart';
 import 'trash_page.dart';
+import 'archive_page.dart';
 
 class EmailPage extends StatefulWidget {
   @override
@@ -28,8 +29,32 @@ class _EmailPageState extends State<EmailPage> {
       'content': 'This is the content of email $index.',
     },
   ); // Sample emails
-
+  List<Map<String, String>> archivedEmails = [];
   int? hoveredIndex;
+
+   void archiveEmail(int index) {
+    Map<String, String> archivedEmail = emails[index];
+    setState(() {
+      archivedEmails.add(archivedEmail);
+      emails.removeAt(index);
+    });
+
+    // Show snackbar with undo option
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Message archived.'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            setState(() {
+              emails.insert(index, archivedEmail);
+              archivedEmails.removeLast();
+            });
+          },
+        ),
+      ),
+    );
+  }
 
   // Store starred emails
   List<int> starredEmails = [];
@@ -111,6 +136,19 @@ void deleteSelectedEmails() {
   );
 }
 
+  //Restore email in trash page
+  void restoreEmail(Map<String, String> email) {
+    setState(() {
+      trashedEmails.remove(email); // Remove from trash
+      emails.add(email); // Add back to inbox
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Email restored to Inbox!")),
+    );
+  }
+
+
 
   // Handle email tap (Navigate to details or toggle selection if in selection mode)
   void handleEmailTap(int index) {
@@ -185,19 +223,31 @@ void deleteSelectedEmails() {
               icon: const Icon(Icons.delete),
               onPressed: deleteSelectedEmails,
             ),
-          IconButton(
-            icon: const Icon(Icons.delete_forever),
+            IconButton(
+            icon: const Icon(Icons.archive),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => TrashPage(
-                    trashedEmails: trashedEmails, // Pass trashed emails
-                  ),
+                  builder: (context) => ArchivePage(archivedEmails: archivedEmails),
                 ),
               );
             },
           ),
+          IconButton(
+          icon: const Icon(Icons.delete_forever),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TrashPage(
+                  trashedEmails: trashedEmails, // Pass trashed emails
+                  onRestore: restoreEmail, // Pass the restore function
+                ),
+              ),
+            );
+          },
+        ),
         ],
       ),
       drawer: Drawer(
@@ -332,64 +382,98 @@ void deleteSelectedEmails() {
             child: ListView.builder(
               itemCount: emails.length,
               itemBuilder: (context, index) {
-                return MouseRegion(
-                  onEnter: (_) {
+                return Dismissible(
+                  key: ValueKey(emails[index]),
+                  background: Container(
+                    color: Colors.green,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.only(left: 20),
+                    child: const Icon(Icons.archive, color: Colors.white),
+                  ),
+                  onDismissed: (direction) {
+                    final archivedEmail = emails[index];
                     setState(() {
-                      hoveredIndex = index;
+                      emails.removeAt(index); // Remove from the list immediately
                     });
-                  },
-                  onExit: (_) {
-                    setState(() {
-                      hoveredIndex = null;
-                    });
-                  },
-                  child: GestureDetector(
-                    onTap: () => handleEmailTap(index),
-                    onLongPress: () => handleEmailLongPress(index),
-                    child: Container(
-                      color: selectedEmails.contains(index)
-                          ? Colors.blue.withOpacity(0.2)
-                          : hoveredIndex == index
-                              ? Colors.grey.withOpacity(0.1)
-                              : Colors.transparent,
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.red,
-                          child: Text(
-                            'S',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        title: Text(
-                          emails[index]['title'] ?? '',
-                          style: TextStyle(
-                            color: themeProvider.isDarkMode
-                                ? Colors.white70
-                                : Colors.black,
-                          ),
-                        ),
-                        subtitle: Text(
-                          emails[index]['content'] ?? '',
-                          style: TextStyle(
-                            color: themeProvider.isDarkMode
-                                ? Colors.grey[500]
-                                : Colors.grey[700],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: IconButton(
-                          icon: Icon(
-                            Icons.star,
-                            color: starredEmails.contains(index)
-                                ? Colors.amber
-                                : themeProvider.isDarkMode
-                                    ? Colors.grey
-                                    : Colors.black,
-                          ),
+
+                    // Add to archived emails
+                    archivedEmails.add(archivedEmail);
+
+                    // Show Snackbar with Undo option
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Message archived.'),
+                        action: SnackBarAction(
+                          label: 'Undo',
                           onPressed: () {
-                            toggleStar(index);
+                            setState(() {
+                              emails.insert(index, archivedEmail); // Restore the email
+                              archivedEmails.removeLast(); // Remove from archives
+                            });
                           },
+                        ),
+                      ),
+                    );
+                  },
+                  child: MouseRegion(
+                    onEnter: (_) {
+                      setState(() {
+                        hoveredIndex = index;
+                      });
+                    },
+                    onExit: (_) {
+                      setState(() {
+                        hoveredIndex = null;
+                      });
+                    },
+                    child: GestureDetector(
+                      onTap: () => handleEmailTap(index),
+                      onLongPress: () => handleEmailLongPress(index),
+                      child: Container(
+                        color: selectedEmails.contains(index)
+                            ? Colors.blue.withOpacity(0.2)
+                            : hoveredIndex == index
+                                ? Colors.grey.withOpacity(0.1)
+                                : Colors.transparent,
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.red,
+                            child: Text(
+                              'S',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          title: Text(
+                            emails[index]['title'] ?? '',
+                            style: TextStyle(
+                              color: themeProvider.isDarkMode
+                                  ? Colors.white70
+                                  : Colors.black,
+                            ),
+                          ),
+                          subtitle: Text(
+                            emails[index]['content'] ?? '',
+                            style: TextStyle(
+                              color: themeProvider.isDarkMode
+                                  ? Colors.grey[500]
+                                  : Colors.grey[700],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing: IconButton(
+                            icon: Icon(
+                              Icons.star,
+                              color: starredEmails.contains(index)
+                                  ? Colors.amber
+                                  : themeProvider.isDarkMode
+                                      ? Colors.grey
+                                      : Colors.black,
+                            ),
+                            onPressed: () {
+                              toggleStar(index);
+                            },
+                          ),
                         ),
                       ),
                     ),

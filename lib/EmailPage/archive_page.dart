@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
 
-class TrashPage extends StatelessWidget {
-  final List<Map<String, String>> trashedEmails;
-  final Function(Map<String, String>) onRestore;
+class ArchivePage extends StatelessWidget {
+  final List<Map<String, String>> archivedEmails;
 
-  TrashPage({required this.trashedEmails, required this.onRestore});
+  ArchivePage({required this.archivedEmails});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Trash'),
+        title: const Text('Archived Emails'),
       ),
-      body: trashedEmails.isEmpty
+      body: archivedEmails.isEmpty
           ? Center(
-              child: const Text('No emails in Trash.'),
+              child: const Text('No emails in Archive.'),
             )
           : ListView.builder(
-              itemCount: trashedEmails.length,
+              itemCount: archivedEmails.length,
               itemBuilder: (context, index) {
-                final email = trashedEmails[index];
+                final email = archivedEmails[index];
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: Colors.grey,
@@ -30,13 +29,6 @@ class TrashPage extends StatelessWidget {
                     email['content'] ?? '',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.restore, color: Colors.green),
-                    onPressed: () {
-                      onRestore(email); 
-                      Navigator.pop(context);
-                    },
                   ),
                 );
               },
