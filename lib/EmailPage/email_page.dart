@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart'; // Added import for ThemeProvider
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme_provider.dart'; // Added import for ThemeProvider
 import 'search_screen.dart';
 import '../SettingPage/setting_page.dart';
@@ -17,6 +18,22 @@ class _EmailPageState extends State<EmailPage> {
 
   // Store starred emails
   List<int> starredEmails = [];
+  String? email;
+  String? profilePic;
+
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
+
+  Future<void> loadData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      email = prefs.getString('email');
+      profilePic = prefs.getString('profilePic');
+    });
+  }
 
   void onScroll(ScrollNotification notification) {
     if (notification is UserScrollNotification) {
@@ -121,13 +138,14 @@ class _EmailPageState extends State<EmailPage> {
                       ),
                     ),
                     CircleAvatar(
-                      backgroundColor: themeProvider.isDarkMode
-                          ? Colors.grey
-                          : Colors.blue, // **Dark/Light Avatar**
-                      child: Text(
-                        'P',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      backgroundColor:
+                          themeProvider.isDarkMode ? Colors.grey : Colors.blue,
+                      backgroundImage:
+                          NetworkImage(profilePic!), // **Dark/Light Avatar**
+                      // child: Text(
+                      //   'P',
+                      //   style: TextStyle(color: Colors.white),
+                      // ),
                     ),
                   ],
                 ),
@@ -152,8 +170,8 @@ class _EmailPageState extends State<EmailPage> {
                   Icon(Icons.email, color: Colors.white, size: 40),
                   SizedBox(width: 16),
                   Text(
-                    'Gmail',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
+                    '$email',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
                   ),
                 ],
               ),

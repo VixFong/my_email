@@ -44,6 +44,8 @@ dependencies:
   google_fonts: ^6.2.1
   file_picker: ^8.1.4
   open_file: ^3.5.10
+  dio: ^5.7.0
+  path: ^1.8.0
 
 dev_dependencies:
   flutter_test:
