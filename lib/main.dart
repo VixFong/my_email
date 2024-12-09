@@ -33,7 +33,10 @@ class MyApp extends StatelessWidget {
         '/': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
         '/email': (context) => EmailPage(),
-        '/settings': (context) => SettingsPage(),
+        '/settings': (context) => SettingsPage(onProfileImageChanged: (String newImageUrl) {
+                // Handle profile image change here
+                print("New profile image URL: $newImageUrl");}
+          ),
       },
     );
   }

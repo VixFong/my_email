@@ -19,6 +19,13 @@ class EmailPage extends StatefulWidget {
 class _EmailPageState extends State<EmailPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool isComposeButtonExpanded = true;
+  String profileImageUrl = '';
+
+  void _updateProfileImage(String imageUrl) {
+    setState(() {
+      profileImageUrl = imageUrl;
+    });
+  }
 
     // List of emails
   List<Map<String, String>> emails = List.generate(
@@ -31,6 +38,15 @@ class _EmailPageState extends State<EmailPage> {
   ); // Sample emails
   List<Map<String, String>> archivedEmails = [];
   int? hoveredIndex;
+
+  void _navigateToSearch() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SearchScreen(),
+      ),
+    );
+  }
 
    void archiveEmail(int index) {
     Map<String, String> archivedEmail = emails[index];
@@ -218,6 +234,13 @@ void deleteSelectedEmails() {
             ? Text('${selectedEmails.length} selected') // Show selected count
             : const Text('Emails'),
         actions: [
+          IconButton(
+            icon: Icon(
+              Icons.search,
+              color: themeProvider.isDarkMode ? Colors.white : Colors.black,
+            ),
+            onPressed: _navigateToSearch,
+          ),
           if (isSelectionMode)
             IconButton(
               icon: const Icon(Icons.delete),
@@ -348,7 +371,7 @@ void deleteSelectedEmails() {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                  MaterialPageRoute(builder: (context) => SettingsPage(onProfileImageChanged: _updateProfileImage,)),
                 );
               },
             ),
