@@ -19,5 +19,5 @@ public class Attachment {
     private Email email;
 
     private String fileName;
-    private String filePath;
+    private String fileUrl;
 }

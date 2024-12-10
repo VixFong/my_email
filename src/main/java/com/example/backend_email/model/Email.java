@@ -26,9 +26,18 @@ public class Email {
 
     @Lob
     private String body;
+    @Builder.Default
+    private boolean isRead = false;
+
 
     private boolean isDraft;
 
+    @Builder.Default
+    private boolean isStarred = false; // Tracks if the email is starred
+
+
+    @Builder.Default
+    private boolean isDeleted = false;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -40,6 +49,18 @@ public class Email {
 
     @OneToMany(mappedBy = "email", cascade = CascadeType.ALL)
     private List<EmailLabel> labels;
+
+    @ManyToOne
+    private Email parentEmail;
+
+    private String folder;
+
+    @PrePersist
+    private void setDefaultFolder() {
+        if (folder == null) {
+            folder = "Inbox";
+        }
+    }
 }
 
 

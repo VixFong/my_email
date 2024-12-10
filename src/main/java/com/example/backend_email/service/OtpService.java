@@ -22,7 +22,7 @@ public class OtpService {
     private static final long OTP_EXPIRATION_TIME = 60 * 1000; // 1 phút
 
     @Autowired
-    private EmailService emailService;
+    private SendOtpToEmailService emailService;
 
     @Lazy // Trì hoãn khởi tạo AuthService
     @Autowired

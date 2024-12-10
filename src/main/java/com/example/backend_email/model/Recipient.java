@@ -1,5 +1,7 @@
 package com.example.backend_email.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,11 +24,21 @@ public class Recipient {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Enumerated(EnumType.STRING)
-    private RecipientType type; // To, CC, BCC
+//    @Enumerated(EnumType.STRING)
+    private String type; // To, CC, BCC
 
-    public enum RecipientType {
-        TO, CC, BCC
-    }
+//    public enum RecipientType {
+//        TO, CC, BCC;
+//
+//        @JsonCreator
+//        public static RecipientType fromValue(String value) {
+//            return RecipientType.valueOf(value.toUpperCase());
+//        }
+//
+//        @JsonValue
+//        public String toValue() {
+//            return this.name();
+//        }
+//    }
 }
 

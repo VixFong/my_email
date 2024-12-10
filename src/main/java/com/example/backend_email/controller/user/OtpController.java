@@ -5,7 +5,7 @@ import com.example.backend_email.dto.request.user.OtpReq;
 import com.example.backend_email.dto.request.user.TokenReq;
 import com.example.backend_email.dto.response.ApiResponse;
 import com.example.backend_email.dto.response.user.OtpResponse;
-import com.example.backend_email.service.EmailService;
+import com.example.backend_email.service.SendOtpToEmailService;
 import com.example.backend_email.service.OtpService;
 import com.nimbusds.jose.JOSEException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ public class OtpController {
     private OtpService otpService;
 
     @Autowired
-    private EmailService emailService;
+    private SendOtpToEmailService emailService;
 
     @PostMapping("/generate")
     public ApiResponse<OtpResponse> generateOtp(@RequestParam String phoneNumber, @RequestParam String email) throws JOSEException {

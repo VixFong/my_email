@@ -5,6 +5,7 @@ import com.example.backend_email.dto.request.user.CreateUserReq;
 import com.example.backend_email.dto.request.user.UpdateProfileReq;
 import com.example.backend_email.dto.response.ApiResponse;
 import com.example.backend_email.dto.response.user.OtpResponse;
+import com.example.backend_email.dto.response.user.SearchUserResponse;
 import com.example.backend_email.dto.response.user.UserResponse;
 import com.example.backend_email.service.UserService;
 import com.nimbusds.jose.JOSEException;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -36,7 +38,7 @@ public class UserController {
         return ApiResponse.<Void>builder()
                 .build();
     }
-    @GetMapping("info")
+    @GetMapping("/info")
     public ApiResponse<UserResponse> getUser(){
         return ApiResponse.<UserResponse>builder()
                 .data(userService.getUser())
@@ -47,6 +49,14 @@ public class UserController {
     public ApiResponse<UserResponse> updateProfile(@ModelAttribute UpdateProfileReq request) throws IOException {
         return ApiResponse.<UserResponse>builder()
                 .data(userService.updateProfile(request))
+                .build();
+    }
+
+    @GetMapping("/search")
+    public ApiResponse<List<SearchUserResponse>> searchUser(@RequestParam String keyword){
+        System.out.println("Controller search");
+        return ApiResponse.<List<SearchUserResponse>>builder()
+                .data(userService.searchUser(keyword))
                 .build();
     }
 }

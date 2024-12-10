@@ -14,6 +14,10 @@ public enum ErrorCode {
 
 
     USER_NOT_FOUND(202, "User not found", HttpStatus.NOT_FOUND),
+    MAIL_NOT_FOUND(202, "Mail not found", HttpStatus.NOT_FOUND),
+    SENDER_NOT_FOUND(202, "Sender not found", HttpStatus.NOT_FOUND),
+    RECIPIENT_NOT_FOUND(202, "Recipient user not found", HttpStatus.NOT_FOUND),
+
     EMAIL_INVALID(203,"Invalid email",HttpStatus.BAD_REQUEST),
     PHONE_INVALID(203,"Invalid phone number",HttpStatus.BAD_REQUEST),
 
@@ -30,6 +34,7 @@ public enum ErrorCode {
 
     NOT_MATCH_PASSWORD(213, "Your confirm password is not match with password",HttpStatus.BAD_REQUEST),
     FAIL_UPLOAD_IMAGE(214, "Upload image fail", HttpStatus.BAD_REQUEST),
+    FAIL_UPLOAD_FILE(214, "Upload file fail", HttpStatus.BAD_REQUEST),
 
 
     IMAGE_NOT_FOUND(215,"Image not found", HttpStatus.NOT_FOUND),
