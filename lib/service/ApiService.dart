@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
+import 'package:final_essays/model/EmailResponse.dart';
 import 'package:final_essays/model/ErrorResponse.dart';
 import 'package:final_essays/model/LoginResponse.dart';
 import 'package:final_essays/model/OtpResponse.dart';
@@ -457,157 +459,104 @@ class ApiService {
       rethrow;
     }
   }
-  // final options = Options(
-  //   headers: {
-  //     "Authorization": "Bearer $token",
-  //     "Content-Type": attachments != null && attachments.isNotEmpty
-  //         ? "multipart/form-data"
-  //         : "application/json",
-  //   },
-  // );
-  // print(attachments);
-  // // try {
-  // // Convert recipients to the expected format
-  // List<Map<String, String>> recipientsMap = recipients.map((recipient) {
-  //   return {
-  //     "userId": recipient.userId,
-  //     "type": recipient.type,
-  //   };
-  // }).toList();
 
-  // dynamic requestData;
+  Future<List<EmailResponse>> viewEmailByFolder({
+    required bool isDetailed,
+    required String folder,
+  }) async {
+    var dio = Dio();
 
-  // if (attachments != null && attachments.isNotEmpty) {
-  //   // Multipart data
-  //   FormData formData = FormData.fromMap({
-  //     "senderId": senderId,
-  //     "subject": subject,
-  //     "body": body,
-  //     "isDraft": isDraft,
-  //     "recipients": jsonEncode(recipientsMap), // Encode JSON for multipart
-  //     "attachments": attachments,
-  //   });
-  //   requestData = formData;
-  // } else {
-  //   // JSON data
-  //   requestData = {
-  //     "senderId": senderId,
-  //     // "subject": subject,
-  //     // "body": body,
-  //     // "isDraft": isDraft,
-  //     // "recipients": recipientsMap, // Directly use JSON
-  //   };
-  // }
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
 
-  // print("Form data: ${requestData}");
+    if (token == null) {
+      throw Exception("Token not found. Please log in again.");
+    }
 
-  // Response response = await _dio.post("$baseUrl/email/compose",
-  //     data: requestData, options: options);
+    print("folder $folder");
+    print("detailed $isDetailed");
+    try {
+      var response = await dio.get(
+        '$baseUrl/email/folder/$folder',
+        queryParameters: {'detailed': isDetailed},
+        options: Options(headers: {
+          "Authorization": "Bearer $token",
+          'Content-Type': 'application/json',
+        }),
+      );
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        // final dataJson = responseData['data'];
+        print("Email sent successfully: $responseData");
+        // Parse response data to List<EmailResponse>
+        List<dynamic> data = response.data['data'];
+        return data.map((item) => EmailResponse.fromJson(item)).toList();
+      } else {
+        throw Exception("Failed to load emails");
+      }
+    } catch (e) {
+      print("Error view emails: $e");
+      rethrow;
+    }
+  }
 
-  // Helper to prepare recipient data
-  // List<Map<String, dynamic>> prepareRecipients(List<Recipient> recipients) {
-  //   return recipients
-  //       .map((recipient) => {
-  //             "userId": recipient.userId,
-  //             "type": recipient.type.toString().split('.').last,
-  //           })
-  //       .toList();
-  // }
+  Future<void> replyToEmail(
+    String emailId,
+    String subject,
+    String body,
+    bool isDraft,
+    List<CreateRecipientReq> recipients,
+    List<MultipartFile>? attachments,
+  ) async {
+    //  Dio _dio = Dio();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    String? senderId = prefs.getString('id');
+    if (token == null) {
+      throw Exception("Token not found. Please log in again.");
+    }
 
-  // Future<void> composeEmail({
-  //   required String senderId,
-  //   required String subject,
-  //   required String body,
-  //   required bool isDraft,
-  //   required List<Map<String, dynamic>> recipients,
-  //   required List<File> attachments,
-  // }) async {
-  //   final Dio _dio = Dio();
-  //   try {
-  //     SharedPreferences prefs = await SharedPreferences.getInstance();
-  //     String? token = prefs.getString('token'); // Replace 'token' with your key
+    try {
+      final bodyData = {
+        'senderId': senderId,
+        'subject': subject,
+        'body': body,
+        'isDraft': isDraft,
+        "recipients": recipients.map((recipient) {
+          return {
+            "userId": recipient.userId,
+            "type": recipient.type,
+          };
+        }).toList(),
+      };
 
-  //     if (token == null) {
-  //       throw Exception("Token not found. Please log in again.");
-  //     }
+      final response = await http.post(
+        Uri.parse('$baseUrl/email/reply/$emailId'),
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(bodyData),
+      );
 
-  //     // Thiết lập headers
-  //     final options = Options(
-  //       headers: {
-  //         "Authorization": "Bearer $token", // Gửi token trong header
-  //         "Content-Type": "multipart/form-data",
-  //       },
-  //     );
+      if (attachments != null && attachments.isNotEmpty) {
+        final responseData = jsonDecode(response.body);
+        final dataJson = responseData['data'];
 
-  //     // Chuẩn bị dữ liệu request
-  //     final formData = FormData.fromMap({
-  //       "senderId": senderId,
-  //       "subject": subject,
-  //       "body": body,
-  //       "isDraft": isDraft,
-  //       "recipients": recipients
-  //           .map((recipient) => {
-  //                 "userId": recipient["userId"],
-  //                 "type": recipient["type"],
-  //               })
-  //           .toList(),
-  //       "attachments": attachments.map((file) => MultipartFile.fromFileSync(
-  //             file.path,
-  //             filename: file.path.split('/').last,
-  //           )),
-  //     });
-
-  //     // Gửi request đến API backend
-  //     final response = await _dio.post(
-  //       "$baseUrl/email",
-  //       data: formData,
-  //       options: options,
-  //     );
-
-  //     if (response.statusCode == 200) {
-  //       print("Email sent successfully!");
-  //     } else {
-  //       throw Exception(
-  //           "Failed to send email. Status code: ${response.statusCode}");
-  //     }
-  //   } catch (e) {
-  //     print("Error in sending email: $e");
-  //     throw Exception("Error in sending email: $e");
-  //   }
-  // }
-  // Future<void> composeEmail({
-  //   required int senderId,
-  //   required String subject,
-  //   required String body,
-  //   required bool isDraft,
-  //   required List<Map<String, dynamic>> recipients,
-  //   required List<File> attachments,
-  // }) async {
-  //   var dio = Dio();
-  //   FormData formData = FormData();
-  //   formData.fields.add(MapEntry('senderId', senderId.toString()));
-  //   formData.fields.add(MapEntry('subject', subject));
-  //   formData.fields.add(MapEntry('body', body));
-  //   formData.fields.add(MapEntry('isDraft', isDraft.toString()));
-  //   for (int i = 0; i < recipients.length; i++) {
-  //     formData.fields.addAll([
-  //       MapEntry('recipients[$i].userId', recipients[i]['userId'].toString()),
-  //       MapEntry('recipients[$i].type', recipients[i]['type'].toString())
-  //     ]);
-  //   }
-  //   for (var file in attachments) {
-  //     String fileName = file.path.split('/').last;
-  //     formData.files.add(MapEntry(
-  //       'attachments',
-  //       await MultipartFile.fromFile(file.path, filename: fileName),
-  //     ));
-  //   }
-  //   try {
-  //     var response = await dio.post('$baseUrl/email', data: formData);
-  //     print('Response status: ${response.statusCode}');
-  //     print('Response body: ${response.data}');
-  //   } catch (e) {
-  //     print('Error: $e');
-  //   }
-  // }
+        await updateEmailAttachments(
+            emailId: dataJson, attachments: attachments);
+      }
+      if (response.statusCode == 200) {
+        // return EmailResponse.fromJson(response.data['data']);
+        final responseData = jsonDecode(response.body);
+        final dataJson = responseData['data'];
+        print("Reply Email sent successfully: $dataJson");
+      } else {
+        throw Exception("Failed to reply to email");
+      }
+    } catch (e) {
+      print("Error replying to email: $e");
+      rethrow;
+    }
+  }
 }

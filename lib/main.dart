@@ -24,15 +24,18 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Email Service',
       debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-        brightness: themeProvider.isDarkMode ? Brightness.dark : Brightness.light,
+      theme: ThemeData(
+        brightness:
+            themeProvider.isDarkMode ? Brightness.dark : Brightness.light,
         textTheme: themeProvider.getTextTheme(),
       ),
       initialRoute: '/',
       routes: {
         '/': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
-        '/email': (context) => EmailPage(),
+        '/email': (context) => EmailPage(
+              folder: 'Inbox',
+            ),
         '/settings': (context) => SettingsPage(),
       },
     );
