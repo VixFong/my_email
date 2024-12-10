@@ -13,21 +13,20 @@ import '../model/User.dart';
 import 'package:dio/dio.dart';
 
 class ApiService {
-  late final String baseUrl = 'http://localhost:8080';
+  late final String baseUrl;
   ApiService() {
-    // if (Platform.isAndroid) {
-    //   baseUrl = 'http://10.0.2.2:8080'; // Android Emulator
-    // } else if (Platform.isIOS) {
-    //   baseUrl = 'http://127.0.0.1:8080'; // iOS Simulator
-    // } else if (Platform.isWindows) {
-    //   baseUrl = 'http://localhost:8080'; // Windows localhost
-    // } else if (Platform.isLinux || Platform.isMacOS) {
-    //   baseUrl = 'http://127.0.0.1:8080'; // Linux/MacOS localhost
-    // } else {
-    //   print('aaaaa');
-    //   baseUrl = 'http://localhost:8080';
-    //   // throw UnsupportedError("Unsupported platform");
-    // }
+    if (Platform.isAndroid) {
+      baseUrl = 'http://10.0.2.2:8080'; // Android Emulator
+    } else if (Platform.isIOS) {
+      baseUrl = 'http://127.0.0.1:8080'; // iOS Simulator
+    } else if (Platform.isWindows) {
+      baseUrl = 'http://localhost:8080'; // Windows localhost
+    } else if (Platform.isLinux || Platform.isMacOS) {
+      baseUrl = 'http://127.0.0.1:8080'; // Linux/MacOS localhost
+    } else {
+      // baseUrl = 'http://localhost:8080';
+      throw UnsupportedError("Unsupported platform");
+    }
   }
   Future<LoginResponse?> login(String phoneNumber, String password) async {
     try {
@@ -280,72 +279,6 @@ class ApiService {
       return [];
     }
   }
-
-  // Future<void> sendEmail({
-  //   // required String senderId,
-  //   required String subject,
-  //   required String body,
-  //   required bool isDraft,
-  //   // required List<Map<String, dynamic>> recipients,
-  //   required List<CreateRecipientReq> recipients,
-  //   List<MultipartFile>? attachments,
-  // }) async {
-  //   Dio _dio = Dio();
-  //   // Lấy token từ local storage
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   String? token = prefs.getString('token'); // Replace 'token' with your key
-  //   String? senderId = prefs.getString('id');
-  //   if (token == null) {
-  //     throw Exception("Token not found. Please log in again.");
-  //   }
-
-  //   // Thiết lập headers
-  //   final options = Options(
-  //     headers: {
-  //       "Authorization": "Bearer $token", // Gửi token trong header
-  //       "Content-Type": "multipart/form-data",
-  //     },
-  //   );
-
-  //   print(recipients);
-  //   try {
-  //     // Convert the CreateRecipientReq list into a list of maps
-  //     // List<Map<String, String>> recipientsMap = recipients.map((recipient) {
-  //     //   return {
-  //     //     "userId": recipient.userId,
-  //     //     "type": recipient.type,
-  //     //   };
-  //     // }).toList();
-
-  //     FormData formData = FormData.fromMap({
-  //       "senderId": senderId,
-  //       "subject": subject,
-  //       "body": body,
-  //       "isDraft": isDraft,
-  //       // "recipients": recipients,
-  //       // "recipients": recipientsMap,
-  //       "recipients": recipients.map((recipient) {
-  //         return {
-  //           "userId": recipient.userId,
-  //           "type": recipient.type,
-  //         };
-  //       }).toList(), // Convert the list of CreateRecipientReq to map
-  //       "attachments": attachments != null ? attachments : [],
-  //     });
-
-  //     Response response =
-  //         await _dio.post("$baseUrl/email", data: formData, options: options);
-
-  //     if (response.statusCode == 200) {
-  //       print("Email sent successfully: ${response.data}");
-  //     } else {
-  //       print("Failed to send email: ${response.statusCode}");
-  //     }
-  //   } catch (e) {
-  //     print("Error sending email: $e");
-  //     rethrow;
-  //   }
-  // }
 
   Future<void> updateEmailAttachments({
     required String emailId,

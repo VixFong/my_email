@@ -1,11 +1,18 @@
 import 'package:final_essays/service/ApiService.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+// import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme_provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 class SettingsPage extends StatefulWidget {
+  final Function(String) onProfileImageChanged;
+
+  SettingsPage({required this.onProfileImageChanged});
+
   @override
   _SettingsPageState createState() => _SettingsPageState();
 }
@@ -23,7 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String selectedFont = 'Default';
   bool autoAnswerMode = false;
   String? token;
-
+  // final picker = ImagePicker();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
@@ -55,18 +62,37 @@ class _SettingsPageState extends State<SettingsPage> {
             phoneNumber = user.phoneNumber;
             gender = user.gender;
             gmailAccount = user.gmailAccount;
-          
-            _firstNameController.text = user.firstName; 
-            _lastNameController.text = user.lastName; 
-            _phoneNumberController.text = user.phoneNumber; 
+
+            _firstNameController.text = user.firstName;
+            _lastNameController.text = user.lastName;
+            _phoneNumberController.text = user.phoneNumber;
             _genderController.text = user.gender;
             _gmailAccountController.text = user.gmailAccount;
-            _dateOfBirthController.text = DateFormat('yyyy-MM-dd').format(user.dateOfBirth);
+            _dateOfBirthController.text =
+                DateFormat('yyyy-MM-dd').format(user.dateOfBirth);
           });
         }
       } catch (e) {
         print('Error: $e');
       }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+    );
+
+    if (result != null) {
+      String? path = result.files.single.path;
+      if (path != null) {
+        setState(() {
+          profileImageUrl = path; // Update the image path
+        });
+      }
+    } else {
+      // User canceled the picker
+      print('No file selected');
     }
   }
 
@@ -81,45 +107,114 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "Settings",
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text("Settings"),
         backgroundColor: themeProvider.isDarkMode ? Colors.black : Colors.blue,
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // User Profile Section
+            // Profile Picture Section
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: _updateProfileImage,
+                    onTap: _pickImage, // Open file picker
                     child: CircleAvatar(
                       radius: 40,
                       backgroundImage: profileImageUrl.isNotEmpty
-                          ? NetworkImage(profileImageUrl)
-                          : AssetImage('assets/default_profile.png')
+                          ? FileImage(File(profileImageUrl))
+                          : AssetImage('asset/default_profile.png')
                               as ImageProvider,
                     ),
                   ),
                   SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Email: $email",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        "Phone: $phoneNumber",
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ],
+                  Text(
+                    "Tap to change profile picture",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            Divider(),
+            // Username Section
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Username",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  TextField(
+                    controller: _firstNameController,
+                    decoration: InputDecoration(
+                      hintText: "Enter your username",
+                      suffixIcon: IconButton(
+                          icon: Icon(Icons.save),
+                          onPressed: () {} //_updateUsername,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(),
+            // Phone Number Section
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Phone Number",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  TextField(
+                    controller: _phoneNumberController,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      hintText: "Enter your phone number",
+                      suffixIcon: IconButton(
+                          icon: Icon(Icons.save),
+                          onPressed: () {} // _updatePhoneNumber,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(),
+            // Password Section
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Change Password",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  TextField(
+                    // controller: ,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: "Enter old password",
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  TextField(
+                    // controller: ,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: "Enter new password",
+                      suffixIcon: IconButton(
+                          icon: Icon(Icons.save),
+                          onPressed: () {} //_updatePassword,
+                          ),
+                    ),
                   ),
                 ],
               ),
@@ -136,38 +231,6 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             Divider(),
-            // Font Settings
-            ListTile(
-              title: Text("Default Font"),
-              trailing: DropdownButton<String>(
-                value: themeProvider.selectedFont,
-                dropdownColor: themeProvider.isDarkMode
-                    ? Colors.grey[850]
-                    : Colors.white, // Set dropdown background color
-                style: TextStyle(
-                  color: themeProvider.isDarkMode
-                      ? Colors.white
-                      : Colors.black, // Set text color
-                ),
-                items: <String>['Default', 'Sans', 'Serif', 'Monospace']
-                    .map((font) => DropdownMenuItem<String>(
-                          value: font,
-                          child: Text(
-                            font,
-                            style: TextStyle(
-                              color: themeProvider.isDarkMode
-                                  ? Colors.white
-                                  : Colors.black, // Adjust item text color
-                            ),
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  themeProvider.updateFont(value!);
-                },
-              ),
-            ),
-            Divider(),
             // Dark Mode
             SwitchListTile(
               title: Text("Dark Mode"),
@@ -177,7 +240,7 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             Divider(),
-            // Auto Answer Mode
+            // Auto-Answer Mode
             SwitchListTile(
               title: Text("Auto-Answer Mode"),
               value: autoAnswerMode,

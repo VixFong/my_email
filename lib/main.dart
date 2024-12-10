@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
         '/email': (context) => EmailPage(
               folder: 'Inbox',
             ),
-        '/settings': (context) => SettingsPage(),
+        '/settings': (context) => SettingsPage(onProfileImageChanged: (String ) {  },),
       },
     );
   }
